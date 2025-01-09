@@ -159,7 +159,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                           ),
                           ButtonSegment(
                             value: 'contact',
-                            label: Text('Contact'),
+                            label: Text('Cont'),
                             icon: Icon(Icons.contact_page),
                           ),
                         ],
