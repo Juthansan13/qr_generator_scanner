@@ -29,7 +29,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     "wifi": TextEditingController(),
     "clipboard": TextEditingController(),
     "location": TextEditingController(),
-     "wallet": TextEditingController(),
+    "wallet": TextEditingController(),
     "amount": TextEditingController(),
     "eventTitle": TextEditingController(),
     "startDate": TextEditingController(),
@@ -44,6 +44,8 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
         return "mailto:${_controller["email"]?.text}";
       case "contacts":
         return "BEGIN:VCARD\nFN:${_controller["contacts"]?.text}\nTEL:${_controller["phone"]?.text}\nEMAIL:${_controller["email"]?.text}\nEND:VCARD";
+     case "phone":
+        return "tel:${_controller["phone"]?.text}";
       case "url":
         return _controller["url"]?.text ?? "";
       case "message":
@@ -159,94 +161,111 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     );
   }
 
- Widget _buildContent() {
-  switch (selectedType) {
-    case "email":
-      return _buildInputField("email", "Enter Email Address");
+  Widget _buildContent() {
+    switch (selectedType) {
+      case "email":
+        return _buildInputField("email", "Enter Email Address");
 
-    case "phone":
-      return _buildInputField("phone", "Enter Phone Number");
+      case "phone":
+        return _buildInputField("phone", "Enter Phone Number");
 
-    case "url":
-      return _buildInputField("url", "Enter Website URL");
+      case "url":
+        return _buildInputField("url", "Enter Website URL");
 
-    case "message":
-      return _buildInputField("message", "Enter Message");
+      case "message":
+        return _buildInputField("message", "Enter Message");
 
-    case "wifi":
-      return _buildInputField("wifi", "Enter WiFi Network Name");
+      case "wifi":
+        return _buildInputField("wifi", "Enter WiFi Network Name");
 
-    case "clipboard":
-      return _buildInputField("clipboard", "Enter Clipboard URL");
+      case "clipboard":
+        return _buildInputField("clipboard", "Enter Clipboard URL");
 
-    case "location":
-      return _buildInputField("location", "Enter Location Coordinates (lat,long)");
+      case "location":
+        return _buildInputField(
+            "location", "Enter Location Coordinates (lat,long)");
 
-    case "bitcoin":
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInputField("wallet", "Enter Bitcoin Wallet Address"),
-          const SizedBox(height: 8),
-          _buildInputField("amount", "Enter Amount (BTC)"),
-        ],
-      );
+      case "bitcoin":
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInputField("wallet", "Enter Bitcoin Wallet Address"),
+            const SizedBox(height: 8),
+            _buildInputField("amount", "Enter Amount (BTC)"),
+          ],
+        );
 
-    case "event":
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInputField("eventTitle", "Enter Event Title"),
-          const SizedBox(height: 8),
-          _buildInputField("startDate", "Enter Start Date (YYYYMMDD)"),
-          const SizedBox(height: 8),
-          _buildInputField("endDate", "Enter End Date (YYYYMMDD)"),
-        ],
-      );
+      case "event":
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInputField("eventTitle", "Enter Event Title"),
+            const SizedBox(height: 8),
+            _buildInputField("startDate", "Enter Start Date (YYYYMMDD)"),
+            const SizedBox(height: 8),
+            _buildInputField("endDate", "Enter End Date (YYYYMMDD)"),
+          ],
+        );
 
-    case "contacts":
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildInputField("contacts", "Enter Contact Name"),
-          const SizedBox(height: 8),
-          _buildInputField("phone", "Enter Phone Number"),
-          const SizedBox(height: 8),
-          _buildInputField("email", "Enter Email Address"),
-        ],
-      );
+      case "contacts":
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInputField("contacts", "Enter Contact Name"),
+            const SizedBox(height: 8),
+            _buildInputField("phone", "Enter Phone Number"),
+            const SizedBox(height: 8),
+            _buildInputField("email", "Enter Email Address"),
+          ],
+        );
 
-    case "image":
-      return Column(
-        children: [
-          ElevatedButton(
-            onPressed: _pickImage,
-            child: const Text("Pick Image"),
-          ),
-          if (imageFile != null)
-            Text("Selected Image: ${imageFile!.path}"),
-        ],
-      );
+      case "image":
+        return Column(
+          children: [
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: const Text("Pick Image"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            if (imageFile != null) Text("Selected Image: ${imageFile!.path}"),
+          ],
+        );
 
-    case "file":
-      return Column(
-        children: [
-          ElevatedButton(
-            onPressed: _pickFile,
-            child: const Text("Pick File"),
-          ),
-          if (file != null)
-            Text("Selected File: ${file!.path}"),
-        ],
-      );
+      case "file":
+        return Column(
+          children: [
+            ElevatedButton(
+              onPressed: _pickFile,
+              child: const Text("Pick File"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.indigo,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            if (file != null) Text("Selected File: ${file!.path}"),
+          ],
+        );
 
-    default:
-      return const Text(
-        "Select a type to generate QR code.",
-        style: TextStyle(fontSize: 16),
-      );
+      default:
+        return const Text(
+          "Select a type to generate QR code.",
+          style: TextStyle(fontSize: 16),
+        );
+    }
   }
-}
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -317,6 +336,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
         title: Text(
           "Generate",
           style: GoogleFonts.poppins(),
