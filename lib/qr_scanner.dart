@@ -37,122 +37,288 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     });
   }
 
-  Future<void> _processScannedData(String? data) async {
-    if (data == null) return;
-    scannerController.stop();
+ Future<void> _processScannedData(String? data) async {
+  if (data == null) return;
 
-    String type = 'text';
-    if (data.startsWith('BEGIN:VCARD')) {
-      type = 'contact';
-    } else if (data.startsWith('http://') || data.startsWith('https://')) {
-      type = 'url';
-    }
+  scannerController.stop(); // Pause the scanner after detecting data
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        builder: (context, controller) => Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+  String type = 'text'; // Default to text
+  if (data.startsWith('BEGIN:VCARD')) {
+    type = 'contact'; // Detect vCard
+  } else if (data.startsWith('http://') || data.startsWith('https://')) {
+      type = 'url'; // Detect URLs
+    } else if (data.startsWith('www.')) {
+    type = 'url'; // Detect URLs starting with "www."
+    data = 'https://$data'; // Prepend "https://" to make it a valid URL
+  } else if (data.startsWith('tel:') || RegExp(r'^\+?[0-9\s-]+$').hasMatch(data)) {
+    type = 'phone'; // Detect phone numbers
+  } else if (data.startsWith('mailto:') || data.contains('@')) {
+    type = 'email'; // Detect emails
+  }
+
+  _showBottomSheet(data, type);
+
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (context, controller) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              Text(
-                'Scanned Data',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              SizedBox(height: 16),
-              Text(
-                "Type: ${type.toUpperCase()}",
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
+            ),
+            Text(
+              'Scanned Data',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Type: ${type.toUpperCase()}",
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(
+                      data!,
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
-              ),
-              SizedBox(height: 16),
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: controller,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SelectableText(
-                        data,
-                        style: Theme.of(context).textTheme.bodyLarge,
+                    SizedBox(height: 24),
+                    if (type == 'url')
+                      ElevatedButton.icon(
+                        onPressed: () => _launchUrl(data!),
+                        icon: Icon(Icons.open_in_new),
+                        label: Text('Open URL'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.fromHeight(50),
+                        ),
                       ),
-                      SizedBox(height: 24),
-                      if (type == 'url')
-                        ElevatedButton.icon(
-                          onPressed: () => _launchUrl(data),
-                          icon: Icon(Icons.open_in_new),
-                          label: Text('Open URL'),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size.fromHeight(50),
-                          ),
+                    if (type == 'phone')
+                      ElevatedButton.icon(
+                        onPressed: () => _makePhoneCall(data!),
+                        icon: Icon(Icons.phone),
+                        label: Text('Call Number'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.fromHeight(50),
                         ),
-                      if (type == 'contact')
-                        ElevatedButton.icon(
-                          onPressed: () => _saveContact(data),
-                          icon: Icon(Icons.contact_page),
-                          label: Text('Save Contact'),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size.fromHeight(50),
-                          ),
+                      ),
+                    if (type == 'email')
+                      ElevatedButton.icon(
+                        onPressed: () => _sendEmail(data!),
+                        icon: Icon(Icons.email),
+                        label: Text('Send Email'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.fromHeight(50),
                         ),
-                    ],
-                  ),
+                      ),
+                    if (type == 'contact')
+                      ElevatedButton.icon(
+                        onPressed: () => _saveContact(data!),
+                        icon: Icon(Icons.contact_page),
+                        label: Text('Save Contact'),
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: Size.fromHeight(50),
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Share.share(data);
-                      },
-                      icon: Icon(Icons.share),
-                      label: Text('Share'),
-                    ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Share.share(data!);
+                    },
+                    icon: Icon(Icons.share),
+                    label: Text('Share'),
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        scannerController.start();
-                      },
-                      icon: Icon(Icons.qr_code_scanner),
-                      label: Text('Scan Again'),
-                    ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      scannerController.start();
+                    },
+                    icon: Icon(Icons.qr_code_scanner),
+                    label: Text('Scan Again'),
                   ),
-                ],
-              )
-            ],
-          ),
+                ),
+              ],
+            )
+          ],
         ),
       ),
+    ),
+  );
+}
+
+void _showBottomSheet(String data, String type) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (context, controller) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 24),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Text(
+              'Scanned Data',
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            SizedBox(height: 16),
+            Text(
+              "Type: ${type.toUpperCase()}",
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+            SizedBox(height: 16),
+            Expanded(
+              child: SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(
+                      data,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    SizedBox(height: 24),
+                    if (type == 'url')
+                      ElevatedButton.icon(
+                        onPressed: () => _launchUrl(data),
+                        icon: Icon(Icons.open_in_new),
+                        label: Text('Open URL'),
+                      ),
+                    if (type == 'phone')
+                      ElevatedButton.icon(
+                        onPressed: () => _makePhoneCall(data),
+                        icon: Icon(Icons.phone),
+                        label: Text('Call Number'),
+                      ),
+                    if (type == 'email')
+                      ElevatedButton.icon(
+                        onPressed: () => _sendEmail(data),
+                        icon: Icon(Icons.email),
+                        label: Text('Send Email'),
+                      ),
+                    if (type == 'contact')
+                      ElevatedButton.icon(
+                        onPressed: () => _saveContact(data),
+                        icon: Icon(Icons.contact_page),
+                        label: Text('Save Contact'),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Share.share(data);
+                    },
+                    icon: Icon(Icons.share),
+                    label: Text('Share'),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      scannerController.start();
+                    },
+                    icon: Icon(Icons.qr_code_scanner),
+                    label: Text('Scan Again'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+
+Future<void> _makePhoneCall(String phone) async {
+  final uri = Uri.parse(phone);
+  if (await canLaunch(uri.toString())) {
+    await launch(uri.toString());
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Unable to make a call')),
     );
   }
+}
+
+Future<void> _sendEmail(String email) async {
+  final uri = Uri.parse(email);
+  if (await canLaunch(uri.toString())) {
+    await launch(uri.toString());
+  } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Unable to send an email')),
+    );
+  }
+}
+
 
   Future<void> _launchUrl(String url) async {
     if (await canLaunch(url)) {

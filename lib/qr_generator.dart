@@ -44,7 +44,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
         return "mailto:${_controller["email"]?.text}";
       case "contacts":
         return "BEGIN:VCARD\nFN:${_controller["contacts"]?.text}\nTEL:${_controller["phone"]?.text}\nEMAIL:${_controller["email"]?.text}\nEND:VCARD";
-     case "phone":
+      case "phone":
         return "tel:${_controller["phone"]?.text}";
       case "url":
         return _controller["url"]?.text ?? "";
@@ -57,17 +57,13 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
       case "location":
         return "geo:${_controller["location"]?.text}";
       case "image":
-        return imageFile != null
-            ? "file://${imageFile!.path}"
-            : "No Image Selected";
-
+        return imageFile != null ? "file://${imageFile!.path}" : "No Image Selected";
       case "file":
         return file != null ? "file://${file!.path}" : "";
       case "bitcoin":
         return "bitcoin:${_controller["wallet"]?.text}?amount=${_controller["amount"]?.text}";
       case "event":
-        return "BEGIN:VEVENT\nSUMMARY:${_controller["eventTitle"]?.text}\nDTSTART:${_controller["startDate"]?.text}\nDTEND:${_controller["endDate"]?.text}\nLOCATION:${_controller["eventLocation"]?.text}\nEND:VEVENT";
-      case "twitter":
+        return "BEGIN:VEVENT\nSUMMARY:${_controller["eventTitle"]?.text}\nDTSTART:${_controller["startDate"]?.text}\nDTEND:${_controller["endDate"]?.text}\nEND:VEVENT";
       default:
         return "";
     }
@@ -89,55 +85,32 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
     return status.isGranted;
   }
 
-/*
   Future<void> _downloadQrCode() async {
-    final directory = await getExternalStorageDirectory();
-    final imagePath = '${directory?.path}/qr_code.png';
-    final capture = await _screenshotController.capture();
-    if (capture == null) return;
-
-    File imageFile = File(imagePath);
-    await imageFile.writeAsBytes(capture);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('QR Code downloaded!')));
-  }
-  */
-  Future<void> _downloadQrCode() async {
-    // Request storage permission
     final hasPermission = await _requestStoragePermission();
     if (!hasPermission) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Storage permission is required to download QR Code')),
+        const SnackBar(content: Text('Storage permission is required to download QR Code')),
       );
       return;
     }
 
     try {
-      // Get the directory for storing the file
       final directory = await getApplicationDocumentsDirectory();
-
-      // Create the file path for saving the QR code
       final imagePath =
           '${directory.path}/qr_code_${DateTime.now().millisecondsSinceEpoch}.png';
 
-      // Capture the QR code
       final capture = await _screenshotController.capture();
       if (capture == null) {
         throw Exception("Failed to capture QR Code");
       }
 
-      // Save the file
       final file = File(imagePath);
       await file.writeAsBytes(capture);
 
-      // Notify the user
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('QR Code downloaded to: $imagePath')),
       );
     } catch (e) {
-      // Handle errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error downloading QR Code: $e')),
       );
@@ -182,8 +155,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
         return _buildInputField("clipboard", "Enter Clipboard URL");
 
       case "location":
-        return _buildInputField(
-            "location", "Enter Location Coordinates (lat,long)");
+        return _buildInputField("location", "Enter Location Coordinates (lat,long)");
 
       case "bitcoin":
         return Column(
@@ -224,16 +196,15 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           children: [
             ElevatedButton(
               onPressed: _pickImage,
-              child: const Text("Pick Image"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Text("Pick Image"),
             ),
             if (imageFile != null) Text("Selected Image: ${imageFile!.path}"),
           ],
@@ -244,16 +215,15 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           children: [
             ElevatedButton(
               onPressed: _pickFile,
-              child: const Text("Pick File"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.indigo,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 22),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              child: const Text("Pick File"),
             ),
             if (file != null) Text("Selected File: ${file!.path}"),
           ],
@@ -274,8 +244,8 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
           await picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         setState(() {
-          imageFile = File(pickedFile.path); // Assign the selected file
-          qrData = _generateQRData(); // Update QR data
+          imageFile = File(pickedFile.path);
+          qrData = _generateQRData();
         });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
