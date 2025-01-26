@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:qr12/qr_generator_screen.dart';
-import 'package:qr12/qr_scanner_screen.dart';
+import 'package:qr12/qr_generator.dart';
+import 'package:qr12/qr_scanner.dart';
 
 
 class MyHomePage extends StatelessWidget {
